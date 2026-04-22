@@ -1,47 +1,45 @@
 # --- STAGE 1: Build ---
-    FROM node:20-alpine AS builder
-
-    # Set the working directory
+    FROM node:20-alpine AS builder 
     WORKDIR /app
     
-    # Install pnpm and necessary build tools for native modules
+    # 1. Install pnpm and build tools for native dependencies (like @swc/core)
     RUN npm install -g pnpm && apk add --no-cache python3 make g++
     
-    # Copy dependency files first for better caching
+    # 2. Copy dependency files
     COPY package.json pnpm-lock.yaml* ./
     
-    # Install ALL dependencies (including devDependencies needed for build)
-    # --unsafe-perm ensures that post-install scripts (like @swc/core) run correctly
+    # 3. Install ALL dependencies
+    # --unsafe-perm is necessary for Medusa's compiler scripts to run in Alpine
     RUN pnpm install --frozen-lockfile --unsafe-perm
     
-    # Copy the rest of your application source code
+    # 4. Copy the rest of your code
     COPY . .
     
-    # Build the Medusa backend
-    # Note: Added --backend-only to avoid the dashboard build error you hit earlier.
-    # If you want the dashboard included, ensure @medusajs/dashboard is in package.json
-    RUN npx medusa build --backend-only
+    # 5. Build the project (Backend + Admin)
+    # If this fails, make sure @medusajs/dashboard is in your package.json
+    RUN npx medusa build
     
-    # --- STAGE 2: Runtime ---
+    # --- STAGE 2: Run ---
     FROM node:20-alpine AS runner
-    
-    # Set production environment
-    ENV NODE_ENV=production
     WORKDIR /app
     
-    # 1. Copy the compiled server artifacts from the builder
-    # Medusa v2 puts the entry point (index.mjs) in .medusa/server
+    # Set to production to optimize Medusa's internal performance
+    ENV NODE_ENV=production
+    
+    # 1. Copy the compiled backend artifacts from the .medusa/server folder
+    # This includes the index.mjs entry point
     COPY --from=builder /app/.medusa/server /app
     
-    # 2. Copy the configuration files (CRITICAL: Medusa needs these at runtime)
+    # 2. Copy essential configuration and dependencies
     COPY --from=builder /app/medusa-config.js /app/medusa-config.js
     COPY --from=builder /app/package.json /app/package.json
-    
-    # 3. Copy the installed node_modules
     COPY --from=builder /app/node_modules /app/node_modules
     
-    # Expose the default Medusa port
+    # 3. Copy the admin dashboard build (so the backend can serve it)
+    COPY --from=builder /app/.medusa/client /app/.medusa/client
+    
+    # Expose Medusa's port
     EXPOSE 9000
     
-    # Start the server using the compiled ESM entry point
+    # Start the server
     CMD ["node", "index.mjs"]
