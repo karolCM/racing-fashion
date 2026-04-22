@@ -19,4 +19,4 @@ RUN pnpm run build
 
 EXPOSE 9000
 
-CMD ["pnpm", "start"]
+CMD ["sh", "-c", "pnpm medusa db:migrate && pnpm start"]
