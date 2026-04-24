@@ -1,58 +1,30 @@
-FROM node:23 as builder
+FROM node:20-alpine AS builder
 
-WORKDIR /app/medusa
+WORKDIR /app
 
-COPY . . 
+RUN corepack enable
 
-RUN rm -rf node_modules
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
-RUN apt-get update && apt-get install -y python3 python3-pip python-is-python3
+COPY . .
 
-RUN yarn install --loglevel=error
-
-RUN yarn run build
-
-
-FROM node:23
-
-# Bug https://github.com/coollabsio/coolify/issues/1930
-ARG COOKIE_SECRET
-ARG JWT_SECRET
-ARG STORE_CORS
-ARG ADMIN_CORS
-ARG AUTH_CORS
-ARG DISABLE_ADMIN
-ARG WORKER_MODE
-ARG PORT
-ARG DATABASE_URL
-ARG REDIS_URL
-ARG BACKEND_URL
-
-RUN echo "${PORT}"
-
-WORKDIR /app/medusa
-
-RUN mkdir .medusa
-
-#COPY package*.json .yarnrc.yml yarn.lock ./ 
-
-COPY medusa-config.ts .
-COPY tsconfig.json .
-
-RUN apt-get update && apt-get install -y python3 python3-pip python-is-python3
-
-COPY --from=builder /app/medusa/.medusa ./.medusa
-
-WORKDIR /app/medusa/.medusa/server
-
-RUN yarn install --production
+RUN pnpm build
 
 
-# RUN medusa migrations run 
-COPY migrations.sh /app/medusa/.medusa/server/migrations.sh
-RUN chmod +x /app/medusa/.medusa/server/migrations.sh
-RUN /app/medusa/.medusa/server/migrations.sh
+FROM node:20-alpine AS runner
 
-RUN rm /app/medusa/.medusa/server/migrations.sh
+WORKDIR /app
 
-CMD ["yarn", "run", "start"]
+ENV NODE_ENV=production
+ENV PORT=9000
+
+RUN corepack enable
+
+COPY --from=builder /app/.medusa/server ./
+
+RUN pnpm install --prod --frozen-lockfile
+
+EXPOSE 9000
+
+CMD ["sh", "-c", "pnpm predeploy && pnpm start"]
