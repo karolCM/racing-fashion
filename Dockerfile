@@ -34,10 +34,10 @@ WORKDIR /app/medusa
 
 RUN mkdir .medusa
 
-# COPY package*.json .yarnrc.yml yarn.lock ./ 
+COPY package*.json .yarnrc.yml yarn.lock ./ 
 
-# COPY medusa-config.ts .
-# COPY tsconfig.json .
+COPY medusa-config.ts .
+COPY tsconfig.json .
 
 RUN apt-get update && apt-get install -y python3 python3-pip python-is-python3
 
