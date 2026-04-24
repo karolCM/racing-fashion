@@ -4,8 +4,9 @@ WORKDIR /app
 
 RUN corepack enable
 
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json pnpm-lock.yaml .npmrc ./
+
+RUN pnpm install --no-frozen-lockfile
 
 COPY . .
 
@@ -23,7 +24,7 @@ RUN corepack enable
 
 COPY --from=builder /app/.medusa/server ./
 
-RUN pnpm install --prod --frozen-lockfile
+RUN pnpm install --prod --no-frozen-lockfile
 
 EXPOSE 9000
 
