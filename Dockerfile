@@ -1,22 +1,31 @@
-FROM node:20-alpine
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml .npmrc ./
+
+RUN pnpm install --no-frozen-lockfile
+
+COPY . .
+
+RUN pnpm build
+
+
+FROM node:20-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV HOST=0.0.0.0
 ENV PORT=9000
 
-RUN apk add --no-cache python3 make g++ && npm install -g pnpm
+RUN corepack enable
 
-COPY package.json pnpm-lock.yaml .npmrc* ./
+COPY --from=builder /app/.medusa/server ./
 
-# Medusa's build needs full dependencies, including admin tooling.
-RUN pnpm install --frozen-lockfile --unsafe-perm
-
-COPY . .
-
-RUN pnpm run build
+RUN pnpm install --prod --no-frozen-lockfile
 
 EXPOSE 9000
 
-CMD ["sh", "-c", "pnpm medusa db:migrate && pnpm start"]
+CMD ["sh", "-c", "pnpm predeploy && pnpm start"]
