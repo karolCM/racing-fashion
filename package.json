@@ -1,6 +1,7 @@
 {
   "name": "fashion-store",
   "version": "0.0.1",
+  "type": "module",
   "description": "A starter for Medusa projects.",
   "author": "Medusa (https://medusajs.com)",
   "license": "MIT",
