@@ -1,6 +1,7 @@
 const { loadEnv, defineConfig } = require("@medusajs/framework/utils")
 
 loadEnv(process.env.NODE_ENV || "development", process.cwd())
+const s3FileUrl = process.env.S3_FILE_URL?.replace(/\/+$/, "")
 
 module.exports = defineConfig({
   projectConfig: {
@@ -23,8 +24,9 @@ module.exports = defineConfig({
           {
             resolve: "@medusajs/file-s3",
             id: "s3",
+            is_default: true,
             options: {
-              file_url: process.env.S3_FILE_URL,
+              file_url: s3FileUrl,
               access_key_id: process.env.S3_ACCESS_KEY_ID,
               secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
               region: process.env.S3_REGION,
