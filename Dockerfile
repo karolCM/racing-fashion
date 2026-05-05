@@ -23,6 +23,7 @@ ENV PORT=9000
 RUN corepack enable
 
 COPY --from=builder /app/.medusa/server ./
+COPY --from=builder /app/medusa-config.js ./medusa-config.js
 
 RUN pnpm install --prod --no-frozen-lockfile
 
