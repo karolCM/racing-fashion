@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "predeploy": "medusa db:migrate",
-    "build": "medusa build",
+    "build": "medusa build && node ./scripts/copy-medusa-config.cjs",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "start": "medusa start",
     "dev": "medusa develop",
@@ -26,7 +26,7 @@
     "@medusajs/admin-sdk": "2.13.6",
     "@medusajs/cli": "2.13.6",
     "@medusajs/dashboard": "2.13.6",
-    "@medusajs/file-s3": "^2.14.1",
+    "@medusajs/file-s3": "2.13.6",
     "@medusajs/framework": "2.13.6",
     "@medusajs/medusa": "2.13.6"
   },
